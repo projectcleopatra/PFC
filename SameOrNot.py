@@ -9,7 +9,6 @@ from selenium import webdriver #The hood way to bypass LinkedIn restriction
 
 import TrumpCard
 
-path_chrome_driver = '/Library/Frameworks/Python.framework/Versions/3.5/lib/python3.5/site-packages'
 
 train_pairs = "alta16_kbcoref_train_pairs.csv"
 train_snippet = "alta16_kbcoref_train_search_results.csv"
@@ -72,7 +71,7 @@ def scrapeThatPage(url:str):
 
     except urllib.error.HTTPError:
         print(url)
-        driver = webdriver.Chrome(path_chrome_driver)
+        driver = webdriver.Chrome()
         driver.get(url)
         html = driver.page_source
         soup = BeautifulSoup(html, 'html.parser')
