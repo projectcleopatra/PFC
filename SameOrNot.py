@@ -1,6 +1,7 @@
 
 #Global parameters
 import csv
+import os
 import ssl
 import urllib
 from urllib.request import urlopen, Request
@@ -40,8 +41,17 @@ def openFilesAndMakeFeatures(url_file: str, label_file: str, snippet_file: str =
 
     for input, label in zip(input_reader, label_reader):
         assert input['id'] == label["id"]
+
+
         AUrl = input["AUrl"]
         BUrl = input["BUrl"]
+
+        '''
+        if 'vázquez' not in AUrl and 'vázquez' not in BUrl:
+            continue
+
+        '''
+
         scrapeThatPage(AUrl)
         scrapeThatPage(BUrl)
 
@@ -55,6 +65,19 @@ def openFilesAndMakeFeatures(url_file: str, label_file: str, snippet_file: str =
 def scrapeThatPage(url:str):
     url = url.strip()
     print(url)
+    url = urllib.parse.urlsplit(url)
+    url = list(url)
+    for index, url_fragment in enumerate(url):
+        if 'http' not in url_fragment:
+            url[index] = urllib.parse.quote(url_fragment)
+    url = urllib.parse.urlunsplit(url)
+
+    if '.linkedin.com/' in url:
+        #do something
+        print('Play the Trump card!')
+
+        return
+
     try:
         req = urllib.request.Request(url, data=None, headers={
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
@@ -62,22 +85,27 @@ def scrapeThatPage(url:str):
         soup = BeautifulSoup(urlopen(req), 'html.parser')
         print("Easy!")
     except ValueError:
-        url = "http://"+ url
+
+
+        url = "http://"+ url #https: should not be passed into quote
+
+
         req = urllib.request.Request(url, data=None, headers={
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-        })
+            })
         soup = BeautifulSoup(urlopen(req), 'html.parser')
         print("Http added")
 
+
     except urllib.error.HTTPError:
         print(url)
-        driver = webdriver.Chrome()
+        driver = webdriver.Chrome(os.getcwd()+'/chromedriver')
         driver.get(url)
         html = driver.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        summary = soup.find('section', {"id": "summary"})
-        print(summary.getText())
+        soup = BeautifulSoup(html)
+
         print("Use the ghetto way: ", url)
+
 
 
 
