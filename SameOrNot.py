@@ -4,11 +4,12 @@ import csv
 import os
 import ssl
 import urllib
+from time import sleep
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 from selenium import webdriver #The hood way to bypass LinkedIn restriction
 
-import TrumpCard
+import LinkedIn
 
 
 train_pairs = "alta16_kbcoref_train_pairs.csv"
@@ -42,7 +43,7 @@ def openFilesAndMakeFeatures(url_file: str, label_file: str, snippet_file: str =
     for input, label in zip(input_reader, label_reader):
         assert input['id'] == label["id"]
 
-
+        print("Getting sample id:", input['id'])
         AUrl = input["AUrl"]
         BUrl = input["BUrl"]
 
@@ -74,9 +75,22 @@ def scrapeThatPage(url:str):
 
     if '.linkedin.com/' in url:
         #do something
-        print('Play the Trump card!')
 
+        while True:
+            try:
+                api_person = LinkedIn.useLinkedInAPI(url)
+            except:
+                sleep(5)
+                continue
+            break
+
+        print("API returning:", api_person)
+        scraped_person = LinkedIn.scrapeLinkedInPage(url)
+        print("Scraped LinkedIn result: ", scraped_person.title)
+        print("========================")
         return
+    elif '.twitter.com' in url:
+        print()
 
     try:
         req = urllib.request.Request(url, data=None, headers={
@@ -103,7 +117,7 @@ def scrapeThatPage(url:str):
         driver.get(url)
         html = driver.page_source
         soup = BeautifulSoup(html)
-
+        driver.quit()
         print("Use the ghetto way: ", url)
 
 

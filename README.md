@@ -1,5 +1,5 @@
 # MakeAltaGreatAgain
-
+This program requires full Anaconda installation with pip and Python property associated with Anaconda
 
 ##Typical issues:
 
@@ -8,3 +8,4 @@ Selenium not available --> Delete all installed Python, uninstall Anaconda --> R
 
 
 AttributeError: 'Service' object has no attribute 'process'
+
