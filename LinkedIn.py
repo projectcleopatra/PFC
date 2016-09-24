@@ -19,7 +19,8 @@ from selenium.webdriver.support import expected_conditions as EC
 linkedin_username = 'passion.gratefulness.focus@gmail.com'
 linkedin_password = '8YE-CXp-q8X-qCG'
 linkedin_login_page = 'https://www.linkedin.com/uas/login'
-def quick_api(api_key, secret_key):
+
+def quick_api(api_key: str, secret_key: str):
     """
     This is a method copied and adapted from the original Python-LinkedIn Package --> server.py
     It automates the URL clicking
@@ -47,24 +48,25 @@ def quick_api(api_key, secret_key):
 
 
 
-
     #driver = webdriver.Chrome(os.getcwd()+'/chromedriver')
-def useLinkedInAPI(url):
-    application = quick_api('7530vp73eoybr6', 'oNQohDeiaRiYpuUF')
+def useLinkedInAPI(url, application):
+
 
     if '/in/' in url:
-        person = application.get_profile(member_url=url)
-        print(person)
-        return person
+        try:
+            profile = application.get_profile(member_url=url)
+        except:
+            profile = ''
+        print(profile)
+        return profile
     elif '/companies/' in url or '/company/' in url:
         company_info = getCompanyInfo(url)
         #company API doesn't give a typical user access to company info
 
         return company_info
     else:
-        print(url)
-        exit(1)
-        return
+        print('New type of LinkedIn URL:', url)
+        return ''
 
 def getCompanyInfo(url):
     session = requests.session()
@@ -95,7 +97,12 @@ def getCompanyInfo(url):
 
 
 
-def scrapeLinkedInPage(url):
+def scrapeLinkedInPage(url: str) -> BeautifulSoup:
+    '''
+
+    :param url:
+    :return:
+    '''
 
     # Get login form
 
@@ -116,9 +123,9 @@ def scrapeLinkedInPage(url):
 
     # Get home page
     page_response = session.get(url)
-    person = BeautifulSoup(page_response.text)
+    soup = BeautifulSoup(page_response.text)
 
-    return person
+    return soup
 
 '''
 #test LinkedIn API
