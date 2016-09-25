@@ -1,24 +1,26 @@
 # Global parameters
-import csv
 import datetime
-import os
-import urllib
-from time import sleep
-from urllib.request import urlopen, Request
-
 import itertools
-
+import os
 import pickle
-from bs4 import BeautifulSoup
+import urllib
 from pathlib import Path
+from time import sleep
+from urllib.request import urlopen
+
+from bs4 import BeautifulSoup
 from selenium import webdriver  # The hood way to bypass LinkedIn restriction
 
 import LinkedIn
+from Utils import csvSmartReader, csvSmartWriter, encodeURL
 
 url_pair_schema = ['id', 'AUrl', 'BUrl']
 label_file_schema = ['id', 'outcome']
 data_file_schema = ['id', 'A_raw_page', 'A_structured_data', 'A_last_update_datetime', 'B_raw_page',
                     'B_structured_data', 'B_last_update_datetime']
+snippet_file_schema = ['id', 'AUrl', 'ATitle', 'ASnippet', 'BUrl', 'BTitle', 'BSnippet']
+
+
 train_snippet = "alta16_kbcoref_train_search_results.csv"
 train_labels = "alta16_kbcoref_train_labels.csv"
 
@@ -26,37 +28,6 @@ train_pairs = "alta16_kbcoref_train_pairs.csv"
 test_pairs = "alta16_kbcoref_test_pairs.csv"
 test_labels = ""  # Not availablee
 test_snippet = "alta16_kbcoref_train_search_results.csv"
-
-
-def csvSmartReader(csvFileName: str, fields: []):
-    csv_reader = csv.DictReader(open(csvFileName), fieldnames=fields)  # w+ file created if it doesnt exist
-    # http://stackoverflow.com/questions/1466000/python-open-built-in-function-difference-between-modes-a-a-w-w-and-r
-    try:
-        has_header = csv.Sniffer().has_header(open(csvFileName).read(1024))
-    except:
-        has_header = False  # case of empty file
-
-    if has_header:
-        next(csv_reader, None)  # skip the headers
-    return csv_reader
-
-
-def csvSmartWriter(csvFileName: str, fields: []):
-    csv_writer = csv.DictWriter(open(csvFileName, 'w+'), fieldnames=fields)
-    csv_writer.writeheader()
-    return csv_writer
-
-
-def encodeURL(url):
-    url = url.strip()
-    print(url)
-    url = urllib.parse.urlsplit(url)
-    url = list(url)
-    for index, url_fragment in enumerate(url):
-        if 'http' not in url_fragment:
-            url[index] = urllib.parse.quote(url_fragment)
-    url = urllib.parse.urlunsplit(url)
-    return url
 
 
 class GetData:
@@ -221,10 +192,7 @@ class GetData:
 
 # End of class definition
 
-def trainModelAndEval(traindataSet, test):
-    results = []
 
-    return results
 
 
 def main():
