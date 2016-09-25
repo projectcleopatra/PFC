@@ -27,7 +27,7 @@ train_labels = "alta16_kbcoref_train_labels.csv"
 train_pairs = "alta16_kbcoref_train_pairs.csv"
 test_pairs = "alta16_kbcoref_test_pairs.csv"
 test_labels = ""  # Not availablee
-test_snippet = "alta16_kbcoref_train_search_results.csv"
+test_snippet = "alta16_kbcoref_test_search_results.csv"
 
 
 class GetData:
