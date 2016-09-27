@@ -11,6 +11,7 @@ import tensorflow as tf
 from GetData import train_snippet, test_snippet, train_labels, label_file_schema, snippet_file_schema
 from Utils import *
 
+num_submodels = 1
 num_classes = 2
 embedding_dim = 20
 learning_rate = 0.02
@@ -89,6 +90,7 @@ def read_labeled_dataset(input_file_name, input_file_schema, label_file_name, la
     print("read %d sentences from %s ." % (len(data), input_file_name))
     return data
 
+
 def read_unlabeled_dataset(input_file_name, input_file_schema, word_to_id):
     input_file_reader = csvSmartReader(input_file_name, input_file_schema)
     data = []
@@ -141,7 +143,7 @@ class ALTATrainAndTest:
 
 
 
-    def eval(self):
+    def word_embedding(self):
         test_results = []
 
 
@@ -207,21 +209,122 @@ class ALTATrainAndTest:
             # uncomment the following line in the grading lab for evaluation
             #print('Accuracy on the test set : %s.' % compute_accuracy(accuracy, input_page_A, input_page_B , correct_label, self.test_dataset))
             # iinput_page_A, input_page_B are the placeholders for two input webpages.
+
+            dev_results = predict(prediction, input_page_A, input_page_B, self.dev_dataset)
             test_results = predict(prediction, input_page_A, input_page_B, self.test_dataset)
-        return test_results
+            train_results = predict(prediction, input_page_A, input_page_B, self.train_dataset)
+
+            print('=' * 20)
+            print('Finished training the Ghetto Embed-word classification model')
+            print('=' * 20)
+
+        return np.asarray(train_results), np.asarray(dev_results), np.asarray(test_results)
+
+    def main_model(self):
+        train_results = []
+        dev_results = []
+        test_results = []
+        #result from the submodels
+        train_results1, dev_results1, test_results1 = self.word_embedding()
+
+        #train_results2, dev_results2, test_results2= #TODO Just a placeholder
+
+
+        #combine training labels to be the new dataset
+        train_results.append(train_results1)
+        dev_results.append(dev_results1)
+        test_results.append(test_results1)
+
+        train_results = np.concatenate(train_results, axis=1)
+        dev_results =np.concatenate(dev_results, axis=1)
+        test_results = np.concatenate(test_results, axis=1)
+
+
+        #print(len(train_results), len(dev_results), len(test_results))
+        assert train_results.shape[1] == dev_results.shape[1] == test_results.shape[1] == num_submodels
+        assert train_results1.shape[0] == train_results.shape[0]
+        assert dev_results1.shape[0] == dev_results.shape[0]
+
+        final_trainset = self.make_final_committee_dataset(train_results, self.train_dataset)
+        final_devset = self.make_final_committee_dataset(dev_results, self.dev_dataset)
+        final_testset = self.make_final_committee_dataset(test_results, self.test_dataset)
+
+        #initialise the final committee voting model
+
+        correct_label = tf.placeholder(tf.float32, shape=[num_classes]) #aka the target variable
+
+        #initialise the input variable aka the big X
+        submodel_prediction_matrix = tf.placeholder(tf.float32, shape=[1,
+                                                                    num_submodels])  # TODO shape will expand [num_classes, num_models]
+
+        weights = tf.Variable(tf.random_uniform([num_submodels, num_classes], -1.0, 1.0)) #aka the big W
+
+        with tf.Session() as sess:
+            y = tf.nn.softmax(tf.matmul(submodel_prediction_matrix, weights))
+
+            cross_entropy = tf.reduce_mean(-tf.reduce_sum(correct_label * tf.log(y), reduction_indices=[1]))
+
+            #change y result from matrix to string labels
+            prediction = tf.cast(tf.argmax(y, 1), tf.int32)
+            actual = tf.cast(tf.argmax(correct_label, 0), tf.int32)
+            correct_prediction = tf.equal(prediction, actual)
+            accuracy = tf.cast(correct_prediction, tf.float32)
+
+            # Build SGD optimizer
+
+            # train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+            train_step = tf.train.AdagradOptimizer(learning_rate).minimize(cross_entropy)
+            # train_step = tf.train.AdadeltaOptimizer(learning_rate).minimize(cross_entropy)
+
+            sess.run(tf.initialize_all_variables())
+            for epoch in range(num_epochs):
+                shuffle(final_trainset)
+                # Writing the code for training. It is not required to use a batch with size larger than one.
+                for i, (input, label) in enumerate(final_trainset):
+                    # Run one step of SGD to update word embeddings.
+                    train_step.run(feed_dict={submodel_prediction_matrix: input, correct_label: label})
+                # The following line computes the accuracy on the development dataset in each epoch.
+                print('Epoch %d : %s .' % (
+                epoch, compute_final_accuracy(accuracy, submodel_prediction_matrix, correct_label, final_devset)))
+
+            # uncomment the following line in the grading lab for evaluation
+            # print('Accuracy on the test set : %s.' % compute_accuracy(accuracy, input_page_A, input_page_B , correct_label, self.test_dataset))
+            # iinput_page_A, input_page_B are the placeholders for two input webpages.
+
+            dev_results = final_predict(prediction, submodel_prediction_matrix, final_devset)
+            test_results = final_predict(prediction, submodel_prediction_matrix, final_testset)
 
 
 
 
+        return dev_results, test_results
+
+    def make_final_committee_dataset(self, submodel_results: list, dataset:list):
+        '''
+        A helper method within the class to prepare for the final result
+        :return:
+        '''
+
+        final_data =[]
 
 
-        return results
+        for i, (page_A, page_B, label) in enumerate(dataset):
+            input_vector = submodel_results[i, :].reshape(1, num_submodels)
 
+            assert input_vector.shape == (1, num_submodels)
+
+            final_data.append((input_vector, label))
+
+        return final_data
+
+
+#####################
+#Two input vector - for submodel training and evaluation
 def compute_accuracy(accuracy, input_page_A, input_page_B, correct_label, eval_dataset):
     num_correct = 0
     for (page_A, page_B, label) in eval_dataset:
         num_correct += accuracy.eval(feed_dict={input_page_A: page_A,  input_page_B: page_B, correct_label: label})
-    print('#correct sentences is %s ' % num_correct)
+    print('#correct submodel classification is %s ' % num_correct)
     return num_correct / len(eval_dataset)
 
 
@@ -230,6 +333,25 @@ def predict(prediction, input_page_A, input_page_B, test_dataset):
     for (page_A, page_B, dummy_label) in test_dataset:
         test_results.append(prediction.eval(feed_dict={input_page_A: page_A,  input_page_B: page_B}))
     return test_results
+
+#####################
+#One input vector - for final model training and evaluation
+def compute_final_accuracy(accuracy, submodel_prediction_matrix, correct_label, eval_dataset):
+    num_correct = 0
+    for (input, label) in eval_dataset:
+        num_correct += accuracy.eval(feed_dict={submodel_prediction_matrix: input, correct_label: label})
+    print('#correct final committee classification is %s ' % num_correct)
+    return num_correct / len(eval_dataset)
+
+
+def final_predict(prediction, submodel_prediction_matrix, test_dataset):
+    test_results = []
+    for (input, dummy_label) in test_dataset:
+        test_results.append(prediction.eval(feed_dict={submodel_prediction_matrix: input}))
+    return test_results
+
+######################
+
 
 
 def write_result_file(test_results, result_file):
@@ -240,7 +362,7 @@ def write_result_file(test_results, result_file):
 def main():
 
     tnt = ALTATrainAndTest()
-    tnt.eval()
+    tnt.main_model()
 
     return
 
