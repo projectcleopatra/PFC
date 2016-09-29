@@ -10,14 +10,20 @@ import numpy as np
 import tensorflow as tf
 from GetData import train_snippet, test_snippet, train_labels, label_file_schema, snippet_file_schema
 from Utils import *
-
+# http://www.deeplearningbook.org
+# https://www.youtube.com/watch?v=SGZ6BttHMPw
+# David Barber - Baysian Based Machine Learning
+# ACL TACL ELLP Stanford NLP Group - keyword when googling papers
+# Tensorflow --> SyntaxNet released one month ago
+#Edword -> Graphical model based on tensorflow
+# Torch - fb vs <--- Google competed
 num_submodels = 1
 num_classes = 2
 embedding_dim = 20
 learning_rate = 0.02
 num_epochs = 10
 #Each datapoint: (vecA, vecB, label)
-
+#
 def create_label_vec(label: str):
     '''
     Creates target vectors from csv label '0' or '1'
@@ -109,7 +115,7 @@ def read_unlabeled_dataset(input_file_name, input_file_schema, word_to_id):
 
 class ALTATrainAndTest:
 
-    def __init__(self):
+    def __init__(self, bootstrap_or_not=False):
 
         #Load scraped training data
         try:
@@ -134,7 +140,7 @@ class ALTATrainAndTest:
                                          train_labels,label_file_schema, self.word_to_id)  # store dataset
 
         #segment data into training and development set
-
+        self.boostrap = bootstrap_or_not
         shuffle(self.data)
         self.train_dataset = self.data[:int(0.8*len(self.data))]
         self.dev_dataset = self.data[int(0.8*len(self.data)):]
@@ -142,6 +148,9 @@ class ALTATrainAndTest:
         self.test_dataset = read_unlabeled_dataset(test_snippet, snippet_file_schema, self.word_to_id)
 
 
+#TODO LSTM availale on tensorflow (reusable) LM1B  input: sequence output: vector
+#G??ve word2vec available for high dim embeddings
+#https://github.com/tensorflow/models/tree/master/lm_1b word-embedding
 
     def word_embedding(self):
         test_results = []
@@ -205,6 +214,12 @@ class ALTATrainAndTest:
                     train_step.run(feed_dict={input_page_A: page_A,  input_page_B: page_B, correct_label: label})
                 # The following line computes the accuracy on the development dataset in each epoch.
                 print('Epoch %d : %s .' % (epoch, compute_accuracy(accuracy, input_page_A, input_page_B , correct_label, self.dev_dataset)))
+                
+                #Bootstrap algorithm starts
+                if self.boostrap ==True:
+                    print('Bootstrapping new data points:')
+                    
+                    
 
             # uncomment the following line in the grading lab for evaluation
             #print('Accuracy on the test set : %s.' % compute_accuracy(accuracy, input_page_A, input_page_B , correct_label, self.test_dataset))
@@ -361,7 +376,7 @@ def write_result_file(test_results, result_file):
 
 def main():
 
-    tnt = ALTATrainAndTest()
+    tnt = ALTATrainAndTest(bootstrap_or_not=True)
     tnt.main_model()
 
     return
