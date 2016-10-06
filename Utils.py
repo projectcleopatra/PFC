@@ -1,5 +1,7 @@
 import csv
+import re
 import urllib
+from urllib.parse import urlparse
 
 
 def csvSmartReader(csvFileName: str, fields: []):
@@ -31,3 +33,18 @@ def encodeURL(url):
             url[index] = urllib.parse.quote(url_fragment)
     url = urllib.parse.urlunsplit(url)
     return url
+
+
+
+
+def extractURLFeatures(url):
+    '''
+    Use url parsing library provided by Python plus a bit of regular expressions
+    :param url:
+    :return:
+    '''
+    url_info = urlparse(url)
+    domain = " ".join(re.split(".", url_info.netloc))
+    path = " ".join(re.split("/|-|[0-9]?", url_info.path))
+    url_feature = domain + path
+    return url_feature

@@ -38,7 +38,7 @@ class GetData:
 
         return
 
-    def openFilesAndUpdateData(self, url_file: str, label_file: str, snippet_file: str = None):
+    def openFilesAndUpdateData(self, url_file: str, label_file: str):
         '''
 
         :param url_file: filename of the file that contains URLs
@@ -49,145 +49,10 @@ class GetData:
         input_reader = csvSmartReader(url_file, url_pair_schema)
         label_reader = csvSmartReader(label_file, label_file_schema)
 
-        data_writer = csvSmartWriter("tempdatafile.csv", data_file_schema)
-        data_file = url_file[:-4] + '_scraped_content'
-
-
-
-
-
-
-
-        # Check if the file exists
-        data_reader = None
-        if Path(data_file).is_file():
-            data_reader = csvSmartReader(data_file, data_file_schema)
-
-        for input, label in itertools.zip_longest(input_reader, label_reader, fillvalue=None):
-
-            # Load the stored data or create a new data structure if stored data are not available
-            try:
-                with open(data_file, 'rb') as pickle_file:
-                    downloaded_data = pickle.load(pickle_file)  # id --> {[field:value]*}
-            except (FileNotFoundError, EOFError):
-                downloaded_data = dict()
-
-            assert input['id'] == label["id"]
-
-            id = input['id']
-            print("Getting sample id:", input['id'])
-            AUrl = input["AUrl"]
-            BUrl = input["BUrl"]
-
-            updated_data = dict()
-            updated_data['id'] = input['id']
-            # update the data file only when it was last updated more than a certain period of time
-
-
-
-
-            if id not in downloaded_data \
-                    or (datetime.datetime.now() - \
-                    downloaded_data[id]['A_last_update_datetime']) \
-                    > datetime.timedelta(days=4)\
-                    or not downloaded_data[id]['A_raw_page'] \
-                    or not downloaded_data[id]['A_structured_data'] \
-                    or not updated_data['A_last_update_datetime'] \
-                    :
-                raw_pageA, structured_dataA, datetimeA = self.scrapeThatPage(AUrl)
-                updated_data['A_raw_page'] = str(raw_pageA)
-                updated_data['A_structured_data'] = structured_dataA
-                updated_data['A_last_update_datetime'] = datetimeA
-
-            else:
-                updated_data['A_raw_page'] = downloaded_data[id]['A_raw_page']
-                updated_data['A_structured_data'] = downloaded_data[id]['A_structured_data']
-                updated_data['A_last_update_datetime'] = downloaded_data[id]['A_last_update_datetime']
-
-            if id not in downloaded_data \
-                    or (datetime.datetime.now() - \
-                    downloaded_data[id]['B_last_update_datetime']) \
-                    > datetime.timedelta(days=4) \
-                    or not downloaded_data[id]['B_raw_page'] \
-                    or not downloaded_data[id]['B_structured_data'] \
-                    or not updated_data['B_last_update_datetime'] \
-                    :
-                raw_pageB, structured_dataB, datetimeB = self.scrapeThatPage(BUrl)
-                updated_data['B_raw_page'] = str(raw_pageB)
-                updated_data['B_structured_data'] = structured_dataB
-                updated_data['B_last_update_datetime'] = datetimeB
-            else:
-                updated_data['B_raw_page'] = downloaded_data[id]['B_raw_page']
-                updated_data['B_structured_data'] = downloaded_data[id]['B_structured_data']
-                updated_data['B_last_update_datetime'] = downloaded_data[id]['B_last_update_datetime']
-
-            downloaded_data[id] = updated_data #add the data into pickle
-            data_writer.writerow(updated_data)
-            with open(data_file, 'wb') as picke_file:
-                pickle.dump(obj = downloaded_data, file = picke_file)
-
-
-        # After writing the tempfile, delete the old data file, rename it to the deleted data file name
-        os.replace("tempdatafile.csv", data_file+'.csv')
-
-
 
         return
 
-    def scrapeThatPage(self, url: str) -> tuple:
 
-        if '.linkedin.com/' in url:
-            # do something
-
-            while True:
-                try:
-
-                    structured_profile = LinkedIn.useLinkedInAPI(url, self.linkedin_api)
-                except:
-                    sleep(5)
-                    continue
-                break
-
-            print("API returning:", structured_profile)
-            scraped_profile = LinkedIn.scrapeLinkedInPage(url)
-            print("Scraped LinkedIn result: ", scraped_profile.title)
-            print("========================")
-            return scraped_profile, structured_profile, datetime.datetime.now()
-        elif '.twitter.com' in url:
-            print()
-
-        try:
-            req = urllib.request.Request(url, data=None, headers={
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-            })
-            soup = BeautifulSoup(urlopen(req), 'html.parser')
-            print("Easy!")
-        except ValueError:
-
-            url = "http://" + url  # https: should not be passed into quote
-
-            req = urllib.request.Request(url, data=None, headers={
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-            })
-            soup = BeautifulSoup(urlopen(req), 'html.parser')
-            print("Http added")
-
-
-        except urllib.error.HTTPError:
-
-            url = encodeURL(url)
-
-            print(url)
-            driver = webdriver.Chrome(os.getcwd() + '/chromedriver')
-            driver.get(url)
-            html = driver.page_source
-            soup = BeautifulSoup(html)
-            driver.quit()
-            print("Use the ghetto way: ", url)
-
-        print("Success", soup.title)
-        print("========================")
-        return soup, "", datetime.datetime.now()
 
 
 # End of class definition
