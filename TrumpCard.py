@@ -38,38 +38,48 @@ class ALTATrainAndTest:
 
 
     def __init__(self):
-        NER_only = False
+        NER_only = False #bchu: Name entity recognistion only, use only use a name entity in a webpage.
+                        #bchu: Name entity: personal name / organization / place
+                        #bchu: used the name entity tagger in the assignment trained by stanford
         #Load NER Tagger
         #http://stackoverflow.com/questions/32819573/nltk-why-does-nltk-not-recognize-the-classpath-variable-for-stanford-ner
-        environ['CLASSPATH'] = os.path.dirname(os.path.abspath(__file__)) + "/stanford-ner-2015-12-09/"
+        environ['CLASSPATH'] = os.path.dirname(os.path.abspath(__file__)) + "/stanford-ner-2015-12-09/" #bchu: because it's in java
 
         self.st_ner = nltk.StanfordNERTagger('stanford-ner-2015-12-09/classifiers/english.all.3class.distsim.crf.ser.gz')
+        #bchu: it can tag any document. when useing, call st_ner.tag
 
         # Submodel2 : character embedding lookup table
         self.char_to_id = char_to_id
+        #bchu: do it in each character. (inspried by word-embedding, you embed each char)
 
         #Submodel1: word embedding lookup table
         self.word_to_id = build_vocab(train_snippet, snippet_file_schema, NER_only = NER_only ,ner = self.st_ner)
 
         # Submodel3:
         self.bichar_to_id = bichar_to_id
+        #bchu: similar to char_to_id, but this is do it in pairs. this is like a 2-gram on char
 
 
+        #bchu: formatted data prepared for word-embedding, output is a []
         self.data = read_labeled_dataset(train_snippet, snippet_file_schema,
                                          train_labels, label_file_schema, self.word_to_id, NER_only = NER_only, ner = self.st_ner)  # store dataset
+        #bchu: formatted data prepared for uni-char embedding
         self.data_2 = read_labeled_dataset_2(train_snippet, snippet_file_schema,
                                          train_labels, label_file_schema, self.char_to_id)  # store dataset
-
+        #bchu: formatted data prepared for bichar embeding
         self.data_3 = read_labeled_dataset_3(train_snippet, snippet_file_schema,
                                          train_labels, label_file_schema, self.bichar_to_id)  # store dataset
-
+        #formatted data prepared for pretrained google data set embeding
         self.data_google_embeddings = read_labeled_dataset_for_pretrained_embeddings(train_snippet, snippet_file_schema,
                                          train_labels, label_file_schema)
 
+        #bchu: due to the fact that we are using a multi model, we want shuffle them correspondingly
         joint_list = list(zip(self.data, self.data_2, self.data_3, self.data_google_embeddings))
-        shuffle(joint_list)
+        #bchu: cast a zip object into a list
+
+        shuffle(joint_list) #bchu: try to test our alg, 20% - 80%
         self.data, self.data_2, self.data_3, self.data_google_embeddings = zip(*joint_list) #derefrencing
-        self.data = list(self.data)
+        self.data = list(self.data) #bchu: an iterable tuple, need to cast into a list
         self.data_2 = list(self.data_2)
         self.data_3 = list(self.data_3)
         self.data_google_embeddings = list(self.data_google_embeddings)
@@ -664,8 +674,8 @@ def write_result_file(test_results, result_file):
              f.write("%d\n" % r)
 
 def main():
-    tnt = ALTATrainAndTest()
-    tnt.main_model(mode='weight')
+    tnt = ALTATrainAndTest() #train And Test instance
+    tnt.main_model(mode='weight') #inside of this, it will get the train result of all the sub models
     # tnt.main_model(mode ='simple_sum')
     return
 
