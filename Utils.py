@@ -3,6 +3,9 @@ import re
 import urllib
 from urllib.parse import urlparse
 
+import nltk
+import numpy as np
+
 
 def csvSmartReader(csvFileName: str, fields: []):
     csv_reader = csv.DictReader(open(csvFileName), fieldnames=fields)  # w+ file created if it doesnt exist
@@ -48,3 +51,11 @@ def extractURLFeatures(url):
     path = " ".join(re.split("/|-|[0-9]?", url_info.path))
     url_feature = domain + path
     return url_feature
+
+
+def getSumVectors(text, embed_matrix):
+    vec = np.zeros((300,), float)
+    for token in nltk.word_tokenize(text):
+        if token in embed_matrix.vocab:
+            vec = vec + embed_matrix[token]
+    return vec
