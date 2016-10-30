@@ -87,6 +87,7 @@ def read_labeled_dataset(input_file_name, input_file_schema, label_file_name, la
     label_file_reader = csvSmartReader(label_file_name, label_file_schema)
 
     data = []
+    labels = []
     for input,label in zip(input_file_reader, label_file_reader):
         content_A = input['ATitle'] + ' '+ input['ASnippet'] #TODO
         content_B = input['BTitle'] + ' '+ input['BSnippet'] #TODO
@@ -94,8 +95,9 @@ def read_labeled_dataset(input_file_name, input_file_schema, label_file_name, la
         word_id_seq_B = map_token_seq_to_word_id_seq(tokenize(content_B), word_to_id, NER_only, ner)
 
         data.append((word_id_seq_A, word_id_seq_B, create_label_vec(label['outcome'].strip('\n'))))
+        labels.append(int(label['outcome'].strip('\n')))
     print("read %d sentences from %s ." % (len(data), input_file_name))
-    return data
+    return data, labels
 
 
 def read_unlabeled_dataset(input_file_name, input_file_schema, word_to_id, NER_only = False, ner = None):

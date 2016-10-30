@@ -1,23 +1,11 @@
 # Global parameters
-import datetime
-import itertools
 import os
-import pickle
-import urllib
-from pathlib import Path
-from time import sleep
-from urllib.request import urlopen
 
-from bs4 import BeautifulSoup
-from selenium import webdriver  # The hood way to bypass LinkedIn restriction
-
-import LinkedIn
-from Utils import csvSmartReader, csvSmartWriter, encodeURL
+from Utils import csvSmartReader
+from WebScraping import LinkedInGrab
 
 url_pair_schema = ['id', 'AUrl', 'BUrl']
 label_file_schema = ['id', 'outcome']
-data_file_schema = ['id', 'A_raw_page', 'A_structured_data', 'A_last_update_datetime', 'B_raw_page',
-                    'B_structured_data', 'B_last_update_datetime']
 snippet_file_schema = ['id', 'AUrl', 'ATitle', 'ASnippet', 'BUrl', 'BTitle', 'BSnippet']
 
 
@@ -33,7 +21,7 @@ test_snippet = "alta16_kbcoref_test_search_results.csv"
 class GetData:
     def __init__(self):
 
-        self.linkedin_api = LinkedIn.quick_api('7530vp73eoybr6', 'oNQohDeiaRiYpuUF')
+        self.linkedin_api = LinkedInGrab.quick_api('7530vp73eoybr6', 'oNQohDeiaRiYpuUF')
         self.twitter_api = None  # TODO
 
         return

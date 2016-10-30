@@ -1,21 +1,18 @@
-import json
+import itertools
 import os
 import pickle
 import re
 import time
 from random import randint
 
-import itertools
 import tweepy
-
 from googleapiclient.discovery import build
-
-from selenium.common import exceptions
 from selenium import webdriver
+from selenium.common import exceptions
 from selenium.webdriver.common.keys import Keys
 
-import LinkedIn
 from Utils import extractURLFeatures
+from WebScraping import LinkedInGrab
 
 seeds = ['potus', 'kimkardashian', 'elonmusk', 'KingJames', 'RoyalFamily' ]
 
@@ -42,10 +39,10 @@ def initialiseWebDriver():
 
     ghetto_browser = webdriver.Chrome(os.getcwd() + '/chromedriver')
     # linkedin login
-    ghetto_browser.get(LinkedIn.linkedin_login_page)
+    ghetto_browser.get(LinkedInGrab.linkedin_login_page)
     time.sleep(2)
-    ghetto_browser.find_element_by_id('session_key-login').send_keys(LinkedIn.linkedin_username)
-    ghetto_browser.find_element_by_id('session_password-login').send_keys(LinkedIn.linkedin_password)
+    ghetto_browser.find_element_by_id('session_key-login').send_keys(LinkedInGrab.linkedin_username)
+    ghetto_browser.find_element_by_id('session_password-login').send_keys(LinkedInGrab.linkedin_password)
     ghetto_browser.find_element_by_xpath("//form[@name='login']//input[@name='signin']").click()
 
     time.sleep(4)
@@ -73,7 +70,7 @@ class Bootstrap:
         self.training_pairs = []
 
 
-        self.lkg =  LinkedIn.LinkedInGrab(self.ghetto_chrome)
+        self.lkg =  LinkedInGrab.LinkedInGrab(self.ghetto_chrome)
 
         # test for various social media sites
         # print(self.getYouTubeChannelProfile('https://www.youtube.com/user/jessyelmurr/featured'))

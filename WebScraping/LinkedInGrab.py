@@ -43,10 +43,6 @@ class LinkedInGrab:
         self.webdriver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")
 
 
-        #delegate url parsing to a method in Utils.py
-
-        url_feature = extractURLFeatures(url)
-
 
         #split "dsdss-tilman/333" into ['dsdss', 'tilman', '', '', '', '']
 
@@ -70,20 +66,23 @@ class LinkedInGrab:
 
         education= self.grabText(self.grabElement("//tr[@id='overview-summary-education']"))
         current = self.grabText(self.grabElement("//tr[@id='overview-summary-current']"))
+        """
         previous = self.grabText(self.grabElement("//tr[@id='overview-summary-past']"))
+
 
         experience = self.grabText(self.grabElement("//div[@id='background-experience']"))
         skills = re.sub(r"[0-9]", ' ', self.grabText(self.grabElement("//div[@id='background-skills']")))
         #list
         languages = [lan.text for lan in self.grabElements("//div[@id='languages-view']//ol//li//h4//span")]
         followings = [elm.text for elm in self.grabElements("//div[@id ='following-container']//p[@class='following-name']")]
-
-        words = " ".join([url_feature, full_name, location, industry, headline, summary,
-                          education, current, previous, experience, skills]+followings+languages)
+        """
+        words = " ".join([ full_name, location, industry, headline, summary,
+                          education, current])#, previous, experience, skills]+followings+languages)
 
         print(words)
         print('='*20)
-        return words
+        return words.replace("\n|\t", " ")
+
 
 
 

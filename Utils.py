@@ -59,3 +59,54 @@ def getSumVectors(text, embed_matrix):
         if token in embed_matrix.vocab:
             vec = vec + embed_matrix[token]
     return vec
+
+def detectCountryCodeDifference(url_pair: tuple)->int:
+    """
+
+    :param url_pairs:
+    :return: 1 if different country code is detected from the url pair
+    """
+
+
+
+    diff = 0
+    assert len(url_pair) == 2
+    url_a, url_b = url_pair
+
+
+    url_a = url_a.replace("in/","")
+    url_b = url_b.replace("in/", "")
+
+    url_a = url_a.replace("linkedin","_")
+    url_b = url_b.replace("linkedin","_")
+
+    country_a=""
+    country_b=""
+
+    country_code_reader = csvSmartReader('CountryCode/data.csv', ["Name","Code"])
+    for row in country_code_reader:
+        code =  row["Code"].lower().strip()
+        if re.search("([/]"+code+"[\W])|(\."+code+"[/|$])", url_a) != None:
+            country_a = row["Name"].strip()
+        if re.search("([/]"+code+"[\W])|(\."+code+"[/|$])", url_b) != None:
+            country_b = row["Name"].strip()
+
+    if country_a != country_b and country_a != "" and country_b != "":
+        print(url_a,'->',country_a, url_b, '->',country_b)
+        diff=1
+
+    return diff
+
+
+def write_result_file(results, filename):
+    writer = csvSmartWriter(filename, ["Id", "Outcome"])
+    id = 200
+    for result in results:
+        row_dict = {}
+        row_dict["Outcome"] = result
+        row_dict["Id"] = id
+        writer.writerow(row_dict)
+        id += 1
+
+
+    return
