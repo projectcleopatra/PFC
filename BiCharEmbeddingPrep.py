@@ -22,9 +22,12 @@ def create_label_vec(label: str): # bchu: passed label with: '0' or '1'
     :return:
     '''
    # Generate a label vector for a given classification label.
+    """
     label_vec = np.zeros(num_classes) # [0,0]
     label_vec[int(label)] = 1 #[1, 0] if label = '0' otherwise [0, 1]
     return label_vec
+    """
+    return int(label)
 
 
 def map_content_to_char_id_seq(content: str, char_to_id: dict)-> []: #bchu: "blah b" -> ['bl', 'la','ah', ...]

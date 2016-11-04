@@ -14,9 +14,13 @@ def create_label_vec(label: str):
     :return:
     '''
    # Generate a label vector for a given classification label.
+
+    '''
     label_vec = np.zeros(num_classes)
     label_vec[int(label)] = 1
     return label_vec
+    '''
+    return int(label)
 
 
 def tokenize(page_content):
